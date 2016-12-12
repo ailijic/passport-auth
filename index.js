@@ -6,6 +6,7 @@ function start () {
   const bodyParser = require('body-parser')
   const mongoose = require('mongoose')
   const User = require('./user-model')
+  const bcrypt = require('bcryptjs')
 
   const app = express()
 
@@ -62,21 +63,36 @@ function start () {
       })
     }
 
-    const user = new User({
-      username: username,
-      password: password
-    })
-
-    user.save((err) => {
+    bcrypt.genSalt(11, (err, salt) => {
       if (err) {
         return res.status(500).json({
           message: 'Internal server error'
         })
       }
 
-      return res.status(201).json({})
+      bcrypt.hash(password, salt, (err, hash) => {
+        if (err) {
+          return res.status(500).json({
+            message: 'Internal server error'
+          })
+        }
+
+        const user = new User({
+          username: username,
+          password: hash
+        })
+
+        user.save((err) => {
+          if (err) {
+            return res.status(500).json({
+              message: 'Internal server error'
+            })
+          }
+
+          return res.status(201).json({})
+        })
+      })
     })
-  })
 
   mongoose.connect('mongod://localhost/auth').then(() => {
     app.listen(process.env.PORT || 8080)
