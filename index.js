@@ -1,6 +1,6 @@
-start()
-function start () {
-  'use strict'
+// start()
+// function start () {
+//  'use strict'
 
   const express = require('express')
   const bodyParser = require('body-parser')
@@ -11,6 +11,49 @@ function start () {
   const app = express()
 
   const jsonParser = bodyParser.json()
+
+  const passport = require('passport')
+  const BasicStrategy = require('passport-http').BasicStrategy
+
+  const strategy = new BasicStrategy((username, password, callback) => {
+    User.findOne({
+      username: username
+    }, (err, user) => {
+      if (err) {
+        callback(err)
+        return
+      }
+
+      if (!user) {
+        return callback(null, false, {
+          message: 'Incorrect username.'
+        })
+      }
+
+      user.validatePassword(password, (err, isValid) => {
+        if (err) {
+          return callback(err)
+        }
+
+        if (!isValid) {
+          return callback(null, false, {
+            message: 'Incorrect password.'
+          })
+        }
+        return callback(null, user)
+      })
+    })
+  })
+
+  passport.use(strategy)
+
+  app.use(passport.initialize())
+
+  app.get('/hidden', passport.authenticate('basic', {session: false}), (req, res) => {
+    res.json({
+      message: 'Luke... I am your father'
+    })
+  })
 
   app.post('/users', jsonParser, (req, res) => {
     if (!req.body) {
@@ -93,8 +136,9 @@ function start () {
         })
       })
     })
+  })
 
-  mongoose.connect('mongod://localhost/auth').then(() => {
+  mongoose.connect('mongodb://localhost/auth').then(() => {
     app.listen(process.env.PORT || 8080)
   })
-}
+//}
