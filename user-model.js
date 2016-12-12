@@ -3,6 +3,7 @@ function start () {
   'use strict'
 
   const mongoose = require('mongoose')
+
   const UserSchema = new mongoose.Schema({
     username: {
       type: String,
@@ -10,7 +11,7 @@ function start () {
       unique: true
     },
     password: {
-      String,
+      type: String,
       required: true
     }
   })
